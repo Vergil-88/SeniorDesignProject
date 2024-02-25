@@ -24,7 +24,7 @@ def process_line(line):
 
 # if __name__ == '__main__':
 def main():    
-    ser = serial.Serial('COM11', 115200, timeout=1)
+    ser = serial.Serial('/dev/tty.usbmodem1301', 115200, timeout=1)
 
 
     # try:
