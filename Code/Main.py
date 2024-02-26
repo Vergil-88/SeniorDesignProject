@@ -2,12 +2,13 @@ from time import sleep
 import threading
 import os
 import TCPLink
-import uwb
+# import uwb
 import math
 import Comm
 
 
 
+S=TCPLink.TCP_init()
 
 
 def calc_dis_ang(x1, y1, x2, y2):
@@ -22,15 +23,64 @@ def calc_dis_ang(x1, y1, x2, y2):
     
     return distance, angle_degrees
     
-my_thread = threading.Thread(target=uwb.main)
-# Start the thread
-my_thread.start()   
+# my_thread = threading.Thread(target=uwb.main)
+# # Start the thread
+# my_thread.start()   
 
 my_GY_thread = threading.Thread(target=Comm.main)
 # Start the thread
 my_GY_thread.start() 
 
-  
+TCPLink.send(S,0,0)
+TCPLink.receive(S,False)
+    
+
+cntR_prev=TCPLink.cntR_int
+cntL_prev=TCPLink.cntL_int
+
+if cntR_prev > 4500:
+    cntR_prev-=9000
+
+if cntL_prev > 4500:
+    cntL_prev-=9000
+
+
+
+print("intial cntR_prev",cntR_prev)
+print("intial cntL_prev",cntL_prev)
+
+
+
+
+
+def encoder_calcs(cntR,cntL):
+    global cntR_prev,cntL_prev,dTheta
+    
+    if (cntR-cntR_prev)>2000 or cntR>8000:
+         cntR-=9000
+         
+
+    if (cntL-cntL_prev)>2000 or cntL>8000:
+         cntL-=9000
+         
+
+    dR=cntR-cntR_prev
+    dL=cntL-cntL_prev
+    k=-0.5
+    
+    dTheta = k * (dR-dL)
+
+    # dTheta=dTheta%360
+    
+    
+
+    # print("cntR",cntR,"cntL",cntL)
+    # print("cntR_prev",cntR_prev,"cntL_prev",cntL_prev)
+    # print("dR",dR,"dL",dL)
+    print("dTheta",dTheta)
+
+    # cntL_prev=cntL
+    # cntR_prev=cntR  
 
 
 
@@ -41,10 +91,10 @@ X=0
 Y=0
 
 
-sleep(20)
+# sleep(20)
 
-X= uwb.x
-Y= uwb.y
+# X= uwb.x
+# Y= uwb.y
 
 cntR_int=0
 cntL_int=0    
@@ -55,7 +105,7 @@ L_start=0
     
     
 
-Distance,Angle=calc_dis_ang(X,Y,20,30)
+# Distance,Angle=calc_dis_ang(X,Y,20,30)
 
 Distance=(Distance*9)/400
 
@@ -63,18 +113,19 @@ print("Distance",Distance)
 print("Angle",Angle)
 print(X,",",Y)
     
-S=TCPLink.TCP_init()
-
-
+TCPLink.send(S,0,0)
 while True:
-    print("Distance",Distance)
-    print("Angle",Angle)
-        
+    # print("Distance",Distance)
+    # print("Angle",Angle)
+    TCPLink.receive(S,True)     
     
+
     gyro_Angle=Comm.angle_values
     cntR_int=TCPLink.cntR_int
     cntL_int=TCPLink.cntL_int
 
+    encoder_calcs(cntR_int,cntL_int)     
+    
     
     
     meters=1
@@ -84,8 +135,8 @@ while True:
 
     # R_start=cntR_int
     # L_start=cntL_int   
-
-    if  abs(gyro_Angle)<=abs(Angle)   :
+    Angle=90
+    if  abs(dTheta)<=abs(Angle)   :
 
         
         if Angle <0 and Angle != 0:
@@ -98,18 +149,19 @@ while True:
 
         R_start=cntR_int
         L_start=cntL_int  
-         
+
     
-    elif ((cntR_int-R_start)<=166*Distance and (cntL_int-L_start)<=166*Distance) :
+    
+    # elif ((cntR_int-R_start)<=166*Distance and (cntL_int-L_start)<=166*Distance) :
         
-        TCPLink.send(S,10,0)
-    else:
+    #     TCPLink.send(S,10,0)
+    # else:
         
-        TCPLink.send(S,0,0)
-        break
+    #     TCPLink.send(S,0,0)
+    #     break
 
        
-    TCPLink.receive(S,True)  
+     
     
     
     

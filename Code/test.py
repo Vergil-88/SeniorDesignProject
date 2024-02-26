@@ -12,8 +12,22 @@ def calc_dis_ang(x1, y1, x2, y2):
     
     return distance, angle_degrees
 
+def encoder_calcs(cntR,cntL):
+    
+    
+    dR=cntR-cntR_prev
+    dL=cntL-cntL_prev
+    k=0.85
+    
+    dTheta = k * (dR-dL) 
+    
+    
+    cntL_prev=cntL
+    cntR_prev=cntR
 
 
-Distance,Angle=calc_dis_ang(0,0,0,100)
-print("Distance",Distance)
-print("Angle",Angle)
+
+# Distance,Angle=calc_dis_ang(0,0,0,100)
+# print("Distance",Distance)
+# print("Angle",Angle)
+
