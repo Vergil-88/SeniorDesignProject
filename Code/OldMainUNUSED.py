@@ -11,7 +11,7 @@ import Comm
 S=TCPLink.TCP_init()
 
 
-def calc_dis_ang(x1, y1, x2, y2):
+def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
     # Calculate distance
     distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     
@@ -136,10 +136,8 @@ while True:
     # R_start=cntR_int
     # L_start=cntL_int   
     Angle=90
-    if  abs(dTheta)<=abs(Angle)   :
-
-        
-        if Angle <0 and Angle != 0:
+    if  abs(dTheta)<=abs(Angle):
+        if Angle < 0 and Angle != 0:
             
             TCPLink.send(S,0,-10)
         elif Angle != 0 :
@@ -159,13 +157,3 @@ while True:
         
     #     TCPLink.send(S,0,0)
     #     break
-
-       
-     
-    
-    
-    
-
-    
-
-
