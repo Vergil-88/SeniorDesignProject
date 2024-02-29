@@ -2,7 +2,7 @@ from time import sleep
 import threading
 import os
 import TCPLink
-# import uwb
+import uwb
 import math
 import Comm
 
@@ -23,9 +23,9 @@ def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
     
     return distance, angle_degrees
     
-# my_thread = threading.Thread(target=uwb.main)
-# # Start the thread
-# my_thread.start()   
+my_thread = threading.Thread(target=uwb.main)
+# Start the thread
+my_thread.start()   
 
 my_GY_thread = threading.Thread(target=Comm.main)
 # Start the thread
@@ -91,10 +91,10 @@ X=0
 Y=0
 
 
-# sleep(20)
+sleep(20)
 
-# X= uwb.x
-# Y= uwb.y
+X= uwb.x
+Y= uwb.y
 
 cntR_int=0
 cntL_int=0    
@@ -117,6 +117,8 @@ TCPLink.send(S,0,0)
 while True:
     # print("Distance",Distance)
     # print("Angle",Angle)
+
+    break
     TCPLink.receive(S,True)     
     
 

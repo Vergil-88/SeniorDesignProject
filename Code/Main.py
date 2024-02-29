@@ -3,7 +3,7 @@ import threading
 import TCPLink
 import math
 import Comm
-import uwb
+# import uwb
 import time
 
 
@@ -27,12 +27,12 @@ my_GY_thread.start()
 
 start_time = time.time()
 
-Encdr_angle, Encdr_Distance, Desired_Angle, gyro_Angle, cntR_int, cntL_int, R_start, L_start = 0
+Encdr_angle, Encdr_Distance, Desired_Angle, gyro_Angle, cntR_int, cntL_int, R_start, L_start = 0,0,0,0,0,0,0,0
 
-sleep(20)
+# sleep(20)
 
-X= uwb.x
-Y= uwb.y
+# X= uwb.x
+# Y= uwb.y
 
 Encdr_Distance = (Encdr_Distance*9)/400
 
@@ -72,7 +72,7 @@ def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
 
 
 
-
+TCPLink.send(S,0,0)
 while True:
 
     TCPLink.receive(S,True)     
@@ -86,6 +86,11 @@ while True:
     timeAngle = ((time.time() - start_time) * 360) / 50 #calcolate current angle using time
     avrgTheta = (Encdr_angle + gyro_Angle + timeAngle) / 3
 
+
+    print("T    ",timeAngle)
+    print("G    ",gyro_Angle)
+    print("EN   ",Encdr_angle)
+    print("|||||||||||||||||||||")
 
     Desired_Angle=90
 
@@ -101,8 +106,9 @@ while True:
 
         R_start=cntR_int
         L_start=cntL_int  
+    print(avrgTheta)
+    print("|||||||||||||||||||||")
 
-    
     
     # elif ((cntR_int-R_start)<=166*Distance and (cntL_int-L_start)<=166*Distance) :
         

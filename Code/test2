@@ -1,0 +1,114 @@
+from time import sleep
+import threading
+import TCPLink
+import math
+import Comm
+import uwb
+import time
+
+
+my_GY_thread = threading.Thread(target=Comm.main)
+my_GY_thread.start() 
+
+my_thread = threading.Thread(target=uwb.main)
+# Start the thread
+my_thread.start() 
+
+def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
+    # Calculate distance
+    distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    
+    # Calculate angle in radians
+    angle_radians = math.atan2(y2 - y1, x2 - x1)
+    
+    # Convert angle to degrees
+    angle = math.degrees(angle_radians)
+
+    steer = 10 / distance
+    
+    return distance , steer
+
+
+def dist_calc( cntR, cntL):
+   
+    if (cntR-prevCntR)>4500 or cntR>8000:
+         cntR-=9000
+         
+
+    if (cntL-prevCntL)>4500 or cntL>8000:
+         cntL-=9000
+         
+
+    dR=cntR-prevCntR
+    dL=cntL-prevCntL
+
+
+    dAvg = (dR+dL)/2
+
+    return dAvg
+
+
+sleep(30)
+
+X= ((uwb.x)/400)*9
+Y= ((uwb.y)/400)*9
+
+
+S = TCPLink.TCP_init()
+TCPLink.send(S,0,0)
+TCPLink.receive(S,False)
+TCPLink.send(S,0,0)
+TCPLink.receive(S,False)
+
+
+prevCntR=TCPLink.cntR_int
+prevCntL=TCPLink.cntL_int
+
+if prevCntR > 4500:
+    prevCntR-=9000
+
+if prevCntL > 4500:
+    prevCntL -=9000
+
+TCPLink.send(S,0,0)
+
+distance , steer = calc_dis_ang(X,Y,2,2)
+
+while True:
+     
+     TCPLink.receive(S,True) 
+
+     cntR_int=TCPLink.cntR_int
+     cntL_int=TCPLink.cntL_int
+
+     dAvg = dist_calc(cntR_int,cntL_int)
+
+     print("cntR_int= ", cntR_int )
+     print("cntL_int= ", cntL_int )
+
+     print("prevCntR= ", prevCntR )
+     print("prevCntL= ", prevCntL )
+
+     print("dAvg= ", dAvg )
+
+     print("X" , X , "Y", Y )
+
+     gyro_Angle=Comm.angle_values
+
+     print("G    ",gyro_Angle)
+
+     print("D    ",distance)
+
+    #  if (gyro_Angle>=45):
+          
+    #       steer = 0
+     
+
+     if (dAvg >= 166*distance) and (gyro_Angle>=90):
+          TCPLink.send(S, 0, 0)
+          break
+     else:
+          TCPLink.send(S, 10, steer)
+          
+          
+     
