@@ -5,6 +5,7 @@ import numpy as np
 from numpy.core import uint16
 import Comm
 import threading
+import time
 
 
 """
@@ -90,14 +91,33 @@ def receive(s, debug):
             pass
 
 
-# def main():
-#     global SendX,SendY
+
+# start_time = time.time()
+# Pi=0
+# prv_time=time.time()
+# S=TCP_init()
+# while True:
     
-#     S=TCP_init()
+#     send(S,10,0)
+#     receive(S,False)
     
-#     send(S,SendX,SendY)
+    
+#     new_time=time.time()
+
+#     dT=new_time-prv_time
+
+#     prv_time = new_time
+
+#     Pi += 0.10*dT
     
     
+    
+#     print("dT: ",dT)
+
+#     print("Y: ",Pi)
+#     if Pi >= 1 :
+#         break
+
 
 
 

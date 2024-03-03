@@ -3,16 +3,22 @@ import threading
 import TCPLink
 import math
 import Comm
-import uwb
+# import uwb
 import time
 
 
 my_GY_thread = threading.Thread(target=Comm.main)
 my_GY_thread.start() 
 
-my_thread = threading.Thread(target=uwb.main)
+# my_thread = threading.Thread(target=uwb.main)
 # Start the thread
-my_thread.start() 
+# my_thread.start() 
+
+def XY_gen (timee):
+     x = timee * 0.0596423842 
+     y = timee * 0.0596423842 
+
+     return x , y
 
 def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
     # Calculate distance
@@ -48,10 +54,10 @@ def dist_calc( cntR, cntL):
     return dAvg
 
 
-sleep(30)
+# sleep(30)
 
-X= ((uwb.x)/400)*9
-Y= ((uwb.y)/400)*9
+# X= ((uwb.x)/400)*9
+# Y= ((uwb.y)/400)*9
 
 
 S = TCPLink.TCP_init()
@@ -72,8 +78,21 @@ if prevCntL > 4500:
 
 TCPLink.send(S,0,0)
 
-distance , steer = calc_dis_ang(X,Y,2,2)
+distance , steer = calc_dis_ang(0,0,2,1)
 
+start_time = time.time()
+
+timee = 0
+
+X = 0
+Y = 0 
+
+x=0
+y=0
+
+Pi=0
+
+prv_time = time.time()
 while True:
      
      TCPLink.receive(S,True) 
@@ -83,6 +102,20 @@ while True:
 
      dAvg = dist_calc(cntR_int,cntL_int)
 
+
+     new_time=time.time()
+
+     dT=new_time-prv_time
+
+     prv_time = new_time
+
+     X , Y = XY_gen(dT)
+    #  Pi += 0.10*dT
+
+    #  print(Pi)
+
+
+
      print("cntR_int= ", cntR_int )
      print("cntL_int= ", cntL_int )
 
@@ -91,7 +124,6 @@ while True:
 
      print("dAvg= ", dAvg )
 
-     print("X" , X , "Y", Y )
 
      gyro_Angle=Comm.angle_values
 
@@ -103,12 +135,22 @@ while True:
           
     #       steer = 0
      
+     timee = time.time() - start_time
 
-     if (dAvg >= 166*distance) and (gyro_Angle>=90):
+     x , y = XY_gen(timee)
+
+     X += x
+     Y += y
+
+     print("X" , X , "Y", Y )
+
+     if (dAvg >= 166*distance): #and (gyro_Angle>=90):
           TCPLink.send(S, 0, 0)
+          print(timee)
+          print("X= ",X," Y= ",Y)
           break
      else:
           TCPLink.send(S, 10, steer)
           
           
-     
+
