@@ -3,9 +3,14 @@ import threading
 import TCPLink
 import math
 import Comm
-# import uwb
+import uwb
 import time
 
+my_thread = threading.Thread(target=uwb.main)
+# Start the thread
+my_thread.start()  
+
+sleep(30)
 
 S=TCPLink.TCP_init()
 TCPLink.send(S,0,0)
@@ -71,49 +76,57 @@ def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
     return distance, angle_degrees
 
 
-
+cntR_int=TCPLink.cntR_int
+cntL_int=TCPLink.cntL_int
 TCPLink.send(S,0,0)
+
+
+
 while True:
 
     TCPLink.receive(S,True)     
 
     gyro_Angle=Comm.angle_values
-    cntR_int=TCPLink.cntR_int
-    cntL_int=TCPLink.cntL_int
+
+    Distance, Angle = calc_dis_ang(uwb.x, uwb.y, 2, 2)
 
     Encdr_angle = encoder_calcs(cntR_int,cntL_int)     
     
-    timeAngle = ((time.time() - start_time) * 360) / 50 #calcolate current angle using time
-    avrgTheta = (Encdr_angle + gyro_Angle + timeAngle) / 3
+    timeAngle = ((time.time() - start_time) * 360) / 50 #calculate current angle using time
+    avrgTheta = (Encdr_angle + gyro_Angle) / 2
 
 
-    print("T    ",timeAngle)
     print("G    ",gyro_Angle)
     print("EN   ",Encdr_angle)
     print("|||||||||||||||||||||")
 
-    Desired_Angle=90
 
-    if  abs(avrgTheta)<=abs(Desired_Angle):
-        if Desired_Angle < 0 and Desired_Angle != 0:
+    if  abs(avrgTheta)<=abs(Angle):
+        if Angle < 0 and Angle != 0:
             
             TCPLink.send(S,0,-10)
-        elif Desired_Angle != 0 :
+        elif Angle != 0 :
             TCPLink.send(S,0,10)
             # break
         else:
             TCPLink.send(S,0,0)
 
         R_start=cntR_int
-        L_start=cntL_int  
-    print(avrgTheta)
-    print("|||||||||||||||||||||")
+        L_start=cntL_int
+    # print(avrgTheta)
+    # print("|||||||||||||||||||||")
+
 
     
-    # elif ((cntR_int-R_start)<=166*Distance and (cntL_int-L_start)<=166*Distance) :
+    if ((cntR_int-R_start)<=166*Distance and (cntL_int-L_start)<=166*Distance) :
         
-    #     TCPLink.send(S,10,0)
-    # else:
+        TCPLink.send(S,10,0)
+    else:
         
-    #     TCPLink.send(S,0,0)
-    #     break
+        TCPLink.send(S,0,0)
+        break
+
+
+    
+
+print("X: %d|| Y: %d",uwb.x ,uwb.y)
