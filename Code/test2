@@ -14,6 +14,14 @@ my_GY_thread.start()
 # Start the thread
 # my_thread.start() 
 
+def XY_clc(D,A):
+     dx = D * math.cos(A)
+     dy = D * math.sin(A)
+
+     return dx , dy
+
+
+
 def XY_gen (timee):
      x = timee * 0.0596423842 
      y = timee * 0.0596423842 
@@ -32,7 +40,7 @@ def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
 
     steer = 10 / distance
     
-    return distance , steer
+    return distance , steer , angle
 
 
 def dist_calc( cntR, cntL):
@@ -78,7 +86,9 @@ if prevCntL > 4500:
 
 TCPLink.send(S,0,0)
 
-distance , steer = calc_dis_ang(0,0,2,1)
+distance , steer , angle = calc_dis_ang(0,0,3,3)
+
+
 
 start_time = time.time()
 
@@ -91,6 +101,8 @@ x=0
 y=0
 
 Pi=0
+
+D=0
 
 prv_time = time.time()
 while True:
@@ -114,7 +126,7 @@ while True:
 
     #  print(Pi)
 
-
+     D = dAvg / 166
 
      print("cntR_int= ", cntR_int )
      print("cntL_int= ", cntL_int )
@@ -123,6 +135,8 @@ while True:
      print("prevCntL= ", prevCntL )
 
      print("dAvg= ", dAvg )
+
+     print("angle", angle)
 
 
      gyro_Angle=Comm.angle_values
@@ -137,14 +151,14 @@ while True:
      
      timee = time.time() - start_time
 
-     x , y = XY_gen(timee)
+     x , y = XY_clc(D,angle)
 
      X += x
      Y += y
 
      print("X" , X , "Y", Y )
 
-     if (dAvg >= 166*distance): #and (gyro_Angle>=90):
+     if (dAvg >= 166*distance) and (gyro_Angle>=90):
           TCPLink.send(S, 0, 0)
           print(timee)
           print("X= ",X," Y= ",Y)
