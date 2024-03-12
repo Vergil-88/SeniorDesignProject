@@ -130,7 +130,7 @@ while True:
 
     cntR_int=TCPLink.cntR_int
     cntL_int=TCPLink.cntL_int
-    Distance, Angle = calc_dis_ang(0, 0, 2, 1)
+    Distance, Angle = calc_dis_ang(0, 0, 2,2)
 
     Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
     
@@ -143,14 +143,17 @@ while True:
     print("G    ",gyro_Angle)
     print("EN   ",Encdr_angle)
     print("|||||||||||||||||||||")
+
+    print("D= ",Distance)
+    print("A= ",Angle)
    
 
-    if  abs(avrgTheta)<=abs(Angle):
+    if  abs(Encdr_angle)<=abs(Angle):
         if Angle < 0 and Angle != 0:
             Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
-            TCPLink.send(S,0,-10)
+            TCPLink.send(S,0,-20)
         elif Angle != 0 :
-            TCPLink.send(S,0,10)
+            TCPLink.send(S,0,20)
             # break
         else:
             TCPLink.send(S,0,0)
@@ -163,7 +166,7 @@ while True:
     
     elif ((avgDis)<=Distance) :
         
-        TCPLink.send(S,10,0)
+        TCPLink.send(S,20,0)
 
         dx, dy = postion_xy(avrgTheta , encoderDis)
 
@@ -171,7 +174,7 @@ while True:
 
         encoderDis += Encdr_Distance
 
-        timeDis += 0.10*dT
+        timeDis += 0.20*dT
 
         avgDis = (encoderDis + timeDis)/2
 
@@ -197,7 +200,7 @@ while True:
     print("encoderDis", encoderDis)
     print("avgDis= ",avgDis)
 
-
+    # break
     
 
 # print("X: %d|| Y: %d",uwb.x ,uwb.y)
