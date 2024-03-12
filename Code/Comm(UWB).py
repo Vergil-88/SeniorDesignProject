@@ -55,8 +55,26 @@ def process_line(line):
         except:
             pass
 
+x,y=0,0
+def tag_pos_4_anchors(a1_range, a2_range, a3_range, a4_range, anchor_positions):
+    global x,y
+    # This function will now use trilateration to calculate the tag's position
+    def equations(p):
+        x, y = p
+        return (
+            (x - anchor_positions[0][0])**2 + (y - anchor_positions[0][1])**2 - a1_range**2,
+            (x - anchor_positions[1][0])**2 + (y - anchor_positions[1][1])**2 - a2_range**2,
+            (x - anchor_positions[2][0])**2 + (y - anchor_positions[2][1])**2 - a3_range**2,
+            (x - anchor_positions[3][0])**2 + (y - anchor_positions[3][1])**2 - a4_range**2,
+        )
+         
 
-
+anchor_positions = [
+    (-4, 4),  # A1710 position
+    (4, 4),  # A1720 position
+    (-4, -4),  # A30 position
+    (4, -4)  # A40 position
+]
 
 
 
@@ -74,7 +92,7 @@ def main():
                 # print(received_data)
                 
             process_line(received_data)
-            
+            x,y=tag_pos_4_anchors(A10Range,A20Range,A30Range,A40Range,)
             print("-----------------")
             print("A10Range",A10Range)
             print("A20Range",A20Range)
