@@ -1,5 +1,7 @@
 import serial
 import time
+from scipy.optimize import fsolve
+from scipy.optimize import least_squares
 
 A10Range =0
 A20Range =0
@@ -57,7 +59,6 @@ def process_line(line):
 
 x,y=0,0
 def tag_pos_4_anchors(a1_range, a2_range, a3_range, a4_range, anchor_positions):
-    global x,y
     # This function will now use trilateration to calculate the tag's position
     def equations(p):
         x, y = p
@@ -67,23 +68,46 @@ def tag_pos_4_anchors(a1_range, a2_range, a3_range, a4_range, anchor_positions):
             (x - anchor_positions[2][0])**2 + (y - anchor_positions[2][1])**2 - a3_range**2,
             (x - anchor_positions[3][0])**2 + (y - anchor_positions[3][1])**2 - a4_range**2,
         )
+
+    # Initial guess for the positions (can be improved based on your setup)
+    x0, y0 = 0, 0
+
+    result = least_squares(equations, (x0, y0))
+
+    # Extract the solution
+    x, y = result.x
+
+    return x, y
          
 
 anchor_positions = [
-    (-4, 4),  # A1710 position
-    (4, 4),  # A1720 position
-    (-4, -4),  # A30 position
-    (4, -4)  # A40 position
+    (-4.5, 4.5),  # A1710 position
+    (4.5, 4.5),  # A1720 position
+    (-4.5, -4.5),  # A30 position
+    (4.5, -4.5)  # A40 position
 ]
 
 
-
+avg_x,avg_y = 0,0
 # if __name__ == '__main__':
 def main():    
-    ser = serial.Serial('COM8', 115200, timeout=1)
+    ser = serial.Serial('/dev/tty.usbserial-02619786', 115200, timeout=1)
 
-
+    n=20
     # try:
+    A10_avg = [0] * n
+    A20_avg = [0] * n
+    A30_avg = [0] * n
+    A40_avg = [0] * n
+    i_Avg = 0
+
+    A10_value=0
+    A20_value=0
+    A30_value=0
+    A40_value=0
+
+    
+
     while True:
 
             # Read and display the values received from Arduino
@@ -92,12 +116,53 @@ def main():
                 # print(received_data)
                 
             process_line(received_data)
-            x,y=tag_pos_4_anchors(A10Range,A20Range,A30Range,A40Range,)
-            print("-----------------")
-            print("A10Range",A10Range)
-            print("A20Range",A20Range)
-            print("A30Range",A30Range)
-            print("A40Range",A40Range)   
+            # x,y=tag_pos_4_anchors(A10Range,A20Range,A30Range,A40Range,anchor_positions)
+
+
+            
+            i_Avg=i_Avg+1
+            i_Avg= i_Avg%n
+
+            if A10Range <=13 :
+                A10_avg[i_Avg]=abs(A10Range)
+
+            if A20Range <=13 :
+                A20_avg[i_Avg]=abs(A20Range)
+
+            if A30Range <=13 :
+                A30_avg[i_Avg]=abs(A30Range)
+
+            if A40Range <=13 :
+                A40_avg[i_Avg]=abs(A40Range)
+
+            A10_value =sum(A10_avg)/n 
+            A20_value =sum(A20_avg)/n
+            A30_value =sum(A30_avg)/n
+            A40_value =sum(A40_avg)/n
+
+
+
+
+
+            # print("-----------------")
+            # print("A10Range",A10Range)
+            # print("A20Range",A20Range)
+            # print("A30Range",A30Range)
+            # print("A40Range",A40Range)
+            # print("x",x)
+            # print("y",y)
+
+            # print("---------avg--------")
+
+            # print("A10_value",A10_value)
+            # print("A20_value",A20_value)
+            # print("A30_value",A30_value)
+            # print("A40_value",A40_value)
+
+          
+            avg_x,avg_y=tag_pos_4_anchors(A10_value,A20_value,A30_value,A40_value,anchor_positions)
+            print("avg_x",avg_x)
+            print("avg_y",avg_y)
             
         
             # print("Extracted angle values:", angle_values)
