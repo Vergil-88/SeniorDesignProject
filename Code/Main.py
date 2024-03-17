@@ -10,7 +10,7 @@ my_thread = threading.Thread(target=CommUWB.main)
 # Start the thread
 my_thread.start()  
 
-# sleep(30)
+# sleep(3)
 
 S=TCPLink.TCP_init()
 TCPLink.send(S,0,0)
@@ -33,7 +33,7 @@ my_GY_thread.start()
 start_time = time.time()
 
 
-avgDis,avgX,avgY, Encdr_angle,timeDis,dx,dy, prv_time, Encdr_Distance, Desired_Angle, gyro_Angle, cntR_int, cntL_int, R_start, L_start , cntR_prev2 , cntL_prev2 = 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+avgDis,avgX,avgY, Encdr_angle,timeDis,dx,dy, prv_time, Encdr_Distance, Desired_Angle, gyro_Angle, cntR_int, cntL_int, R_start, L_start , cntR_prev2 , cntL_prev2 , avrgTheta = 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 # sleep(20)
 
@@ -114,6 +114,10 @@ TCPLink.send(S,0,0)
 
 encoderDis=0
 
+# Distance, Angle = calc_dis_ang(CommUWB.avg_x, CommUWB.avg_y, 1, -1)
+
+Distance, Angle = calc_dis_ang(0 , 0, -1, 1)
+
 while True:
 
 
@@ -130,12 +134,11 @@ while True:
 
     cntR_int=TCPLink.cntR_int
     cntL_int=TCPLink.cntL_int
-    Distance, Angle = calc_dis_ang(CommUWB.avg_x, CommUWB.avg_y, 2,2)
 
-    Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
+    # Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
     
     timeAngle = ((time.time() - start_time) * 360) / 50 #calculate current angle using time
-    avrgTheta = (Encdr_angle + gyro_Angle) / 2
+    
 
     
 
@@ -151,9 +154,12 @@ while True:
     if  abs(Encdr_angle)<=abs(Angle):
         if Angle < 0 and Angle != 0:
             Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
+            avrgTheta = (Encdr_angle + gyro_Angle) / 2
             TCPLink.send(S,0,-20)
         elif Angle != 0 :
             TCPLink.send(S,0,20)
+            Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
+            avrgTheta = (Encdr_angle + gyro_Angle) / 2
             # break
         else:
             TCPLink.send(S,0,0)
@@ -168,7 +174,7 @@ while True:
         
         TCPLink.send(S,20,0)
 
-        dx, dy = postion_xy(avrgTheta , avgDis)
+        dx, dy = postion_xy(Encdr_angle , avgDis)
 
         avgX = (dx*0.7 )+(CommUWB.avg_x * 0.3)
         avgY = (dy*0.7 )+(CommUWB.avg_y * 0.3)
@@ -198,7 +204,9 @@ while True:
     
     
     print("timeDis",timeDis)
-    print("X= ",avgX," Y= ",avgY)
+    # print("X= ",avgX," Y= ",avgY)
+    print("enX= ",dx," enY= ",dy)
+    print("uwbX= ",CommUWB.avg_x," uwbY= ",CommUWB.avg_y)
     print("ED= ",Encdr_Distance)
     print("encoderDis", encoderDis)
     print("avgDis= ",avgDis)

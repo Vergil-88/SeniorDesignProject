@@ -90,7 +90,8 @@ anchor_positions = [
 
 avg_x,avg_y = 0,0
 # if __name__ == '__main__':
-def main():    
+def main():
+    global avg_x,avg_y    
     ser = serial.Serial('/dev/tty.usbserial-02619786', 115200, timeout=1)
 
     n=20
@@ -161,8 +162,8 @@ def main():
 
           
             avg_x,avg_y=tag_pos_4_anchors(A10_value,A20_value,A30_value,A40_value,anchor_positions)
-            print("avg_x",avg_x)
-            print("avg_y",avg_y)
+            # print("avg_x",avg_x)
+            # print("avg_y",avg_y)
             
         
             # print("Extracted angle values:", angle_values)
@@ -175,7 +176,7 @@ def main():
     #     ser.close()
         
         
-main()
+# main()
 
 
 
