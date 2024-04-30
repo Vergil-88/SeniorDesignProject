@@ -124,16 +124,16 @@ def main():
             i_Avg=i_Avg+1
             i_Avg= i_Avg%n
 
-            if A10Range <=13 :
+            if abs(A10Range) <=13 :
                 A10_avg[i_Avg]=abs(A10Range)
 
-            if A20Range <=13 :
+            if abs(A20Range) <=13 :
                 A20_avg[i_Avg]=abs(A20Range)
 
-            if A30Range <=13 :
+            if abs(A30Range) <=13 :
                 A30_avg[i_Avg]=abs(A30Range)
 
-            if A40Range <=13 :
+            if abs(A40Range) <=13 :
                 A40_avg[i_Avg]=abs(A40Range)
 
             A10_value =sum(A10_avg)/n 
