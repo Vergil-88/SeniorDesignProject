@@ -1,4 +1,4 @@
-#include <gtk/gtk.h>
+// #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -115,40 +115,40 @@ int receive(int s, int debug) {
 }
 
 ///////////////////////////////GUI method///////////////////////////////
-static gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
-    switch (event->keyval) {
-        case GDK_KEY_Left:
-            steer -= 1;
-            break;
-        case GDK_KEY_Right:
-            steer += 1;
-            break;
-        case GDK_KEY_Up:
-            speed -= 1;
-            break;
-        case GDK_KEY_Down:
-            speed += 1;
-            break;
-        case GDK_KEY_space:
-            speed = 0;
-            steer = 0;
-            break;
-    }
+// static gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
+//     switch (event->keyval) {
+//         case GDK_KEY_Left:
+//             steer -= 1;
+//             break;
+//         case GDK_KEY_Right:
+//             steer += 1;
+//             break;
+//         case GDK_KEY_Up:
+//             speed -= 1;
+//             break;
+//         case GDK_KEY_Down:
+//             speed += 1;
+//             break;
+//         case GDK_KEY_space:
+//             speed = 0;
+//             steer = 0;
+//             break;
+//     }
 
-    if (steer < 0) steer += 65536;
-    if (speed < 0) speed += 65536;
+//     if (steer < 0) steer += 65536;
+//     if (speed < 0) speed += 65536;
 
-    g_print("Speed: %d, Steer: %d\n", speed, steer);
+//     g_print("Speed: %d, Steer: %d\n", speed, steer);
 
-    send_command(sockfd, speed, steer);
-    return TRUE;
-}
+//     send_command(sockfd, speed, steer);
+//     return TRUE;
+// }
 
 ///////////////////////////////THREAD///////////////////////////////
 void *receive_thread_func(void *arg) {
     int s = *(int *)arg;
     while (1) {
-        if (receive(s, 1) < 0) {
+        if (receive(s, 0) < 0) {
             printf("Attempting to reconnect...\n");
             close(s);
             s = TCP_init();
@@ -165,7 +165,7 @@ void *receive_thread_func(void *arg) {
 
 ///////////////////////////////START OF MAIN///////////////////////////////
 int main(int argc, char *argv[]) {
-    gtk_init(&argc, &argv);
+    // gtk_init(&argc, &argv);
 
     sockfd = TCP_init();
     if (sockfd < 0) {
@@ -179,13 +179,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    g_signal_connect(window, "key_press_event", G_CALLBACK(on_key_press), NULL);
+    // GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    // g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    // g_signal_connect(window, "key_press_event", G_CALLBACK(on_key_press), NULL);
 
-    gtk_widget_show_all(window);
+    // gtk_widget_show_all(window);
 
-    gtk_main();
+    // gtk_main();
+
+    
+    while (1) {
+
+        send_command(sockfd,-30,0);
+
+    }
+    
+
     close(sockfd);
 
     return 0;
