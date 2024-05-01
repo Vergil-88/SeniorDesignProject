@@ -1,82 +1,88 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <unistd.h>
+#include <stdio.h>      // Standard input/output definitions
+#include <stdlib.h>     // Standard library for using exit function
+#include <string.h>     // String function definitions
+#include <unistd.h>     // UNIX standard function definitions
+#include <fcntl.h>      // File control definitions
+#include <errno.h>      // Error number definitions
+#include <termios.h>    // POSIX terminal control definitions
+#include <signal.h>     // Signal handling definitions
 
-float angle_values = 0;
+int fd; // File descriptor for the port, make it global for signal handler
 
-void process_line(char *line) {
-    char *ptr;
-    if ((ptr = strstr(line, "Angle:")) != NULL) {
-        ptr += strlen("Angle:");  // Move past "Angle:"
-        angle_values = strtof(ptr, NULL);
-        if (angle_values == 0 && errno == EINVAL) {
-            printf("Could not convert angle value to float: '%s'\n", line);
-        }
-    }
+void signal_handler(int sig) {
+    printf("\nTerminating...\n");
+    close(fd);
+    exit(EXIT_SUCCESS);
 }
 
-int setup_serial() {
-    int fd;
-    struct termios tty;
-
-    fd = open("/dev/tty.usbmodem11301", O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        printf("Error opening serial port: %s\n", strerror(errno));
-        return -1;
+int open_port(void) {
+    // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
+    fd = open("/dev/tty.usbmodem11401", O_RDWR | O_NOCTTY | O_NDELAY);
+    if (fd == -1) {
+        perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
+    } else {
+        fcntl(fd, F_SETFL, 0); // Clear all flags on descriptor, enable direct I/O
     }
-
-    memset(&tty, 0, sizeof(tty));
-    if (tcgetattr(fd, &tty) != 0) {
-        printf("Error from tcgetattr: %s\n", strerror(errno));
-        close(fd);
-        return -1;
-    }
-
-    cfsetospeed(&tty, B115200);
-    cfsetispeed(&tty, B115200);
-
-    tty.c_cflag |= (CLOCAL | CREAD);  // Enable the receiver and set local mode
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;               // 8-bit characters
-    tty.c_cflag &= ~PARENB;           // No parity bit
-    tty.c_cflag &= ~CSTOPB;           // 1 stop bit
-    tty.c_cflag &= ~CRTSCTS;          // No hardware flow control
-
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off software flow control
-    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Raw input
-
-    tty.c_oflag &= ~OPOST; // Raw output
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        printf("Error from tcsetattr: %s\n", strerror(errno));
-        close(fd);
-        return -1;
-    }
-
-    return fd;
+    return (fd);
 }
 
-int main() {
-    int serial_fd = setup_serial();
-    if (serial_fd < 0) return -1;
+void configure_port(int fd) {
+    struct termios options;
 
-    char read_buf[256];
-    int n;
+    // Get the current options for the port
+    tcgetattr(fd, &options);
+
+    // Set the baud rates to 115200
+    cfsetispeed(&options, B115200);
+    cfsetospeed(&options, B115200);
+
+    // Enable the receiver and set local mode
+    options.c_cflag |= (CLOCAL | CREAD);
+
+    // Set 8N1 (no parity bit, 1 stop bit, 8 data bits)
+    options.c_cflag &= ~PARENB;
+    options.c_cflag &= ~CSTOPB;
+    options.c_cflag &= ~CSIZE;
+    options.c_cflag |= CS8;
+
+    // Disable hardware flow control
+    options.c_cflag &= ~CRTSCTS;
+
+    // Choose raw input
+    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+
+    // Disable software flow control
+    options.c_iflag &= ~(IXON | IXOFF | IXANY);
+
+    // Set the new options for the port
+    tcsetattr(fd, TCSANOW, &options);
+}
+
+int main(void) {
+    signal(SIGINT, signal_handler); // Setup the signal handler for SIGINT
+
+    fd = open_port();
+    if (fd == -1) {
+        fprintf(stderr, "Failed to open serial port\n");
+        exit(EXIT_FAILURE);
+    }
+
+    configure_port(fd);
 
     while (1) {
-        n = read(serial_fd, read_buf, sizeof(read_buf) - 1);
-        if (n > 0) {
-            read_buf[n] = '\0';
-            printf("Received: %s\n", read_buf);
-            process_line(read_buf);
-            printf("Extracted angle values: %f\n", angle_values);
+        char buffer[256];  // Buffer for where to store the data
+        int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
+        if (n < 0) {
+            perror("Read failed - ");
+            continue;
+        } else if (n == 0) {
+            printf("No data on port\n");
+        } else {
+            buffer[n] = '\0';  // Null terminate the string
+            printf("Read %d bytes: %s\n", n, buffer);
         }
     }
 
-    close(serial_fd);
-    return 0;
+    close(fd);
+    return EXIT_SUCCESS;
 }

@@ -1,141 +1,88 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <unistd.h>
-#include <math.h>
-#include <gsl/gsl_multifit_nlin.h>
+#include <stdio.h>      // Standard input/output definitions
+#include <stdlib.h>     // Standard library for using exit function
+#include <string.h>     // String function definitions
+#include <unistd.h>     // UNIX standard function definitions
+#include <fcntl.h>      // File control definitions
+#include <errno.h>      // Error number definitions
+#include <termios.h>    // POSIX terminal control definitions
+#include <signal.h>     // Signal handling definitions
 
-// Define struct for positions
-typedef struct {
-    double x;
-    double y;
-} Position;
+int fd; // File descriptor for the port, make it global for signal handler
 
-Position anchor_positions[4] = {
-    {-4.5, 4.5},   // Anchor A1710 position
-    {4.5, 4.5},    // Anchor A1720 position
-    {-4.5, -4.5},  // Anchor A30 position
-    {4.5, -4.5}    // Anchor A40 position
-};
-
-double ranges[4];  // To store range measurements
-
-void process_line(char *line) {
-    char *ptr, *endptr;
-    double value;
-    if ((ptr = strstr(line, "Range:")) != NULL) {
-        value = strtod(ptr + 6, &endptr);  // Skip "Range:" and parse the number
-        if (endptr != ptr) {  // Check for a valid conversion
-            if (strstr(line, "from: 1710")) ranges[0] = fabs(value);
-            if (strstr(line, "from: 1720")) ranges[1] = fabs(value);
-            if (strstr(line, "from: 30"))   ranges[2] = fabs(value);
-            if (strstr(line, "from: 40"))   ranges[3] = fabs(value);
-        }
-    }
+void signal_handler(int sig) {
+    printf("\nTerminating...\n");
+    close(fd);
+    exit(EXIT_SUCCESS);
 }
 
-int open_serial(const char *portname) {
-    int fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        perror("Error opening serial port");
-        return -1;
+int open_port(void) {
+    // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
+    fd = open("/dev/tty.usbserial-02619786", O_RDWR | O_NOCTTY | O_NDELAY);
+    if (fd == -1) {
+        perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
+    } else {
+        fcntl(fd, F_SETFL, 0); // Clear all flags on descriptor, enable direct I/O
     }
-
-    struct termios tty;
-    memset(&tty, 0, sizeof tty);
-    if (tcgetattr(fd, &tty) != 0) {
-        perror("Error from tcgetattr");
-        close(fd);
-        return -1;
-    }
-
-    cfsetospeed(&tty, B115200);
-    cfsetispeed(&tty, B115200);
-
-    tty.c_cflag |= (CLOCAL | CREAD);    // Enable reading
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;                 // 8-bit chars
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Shut off xon/xoff ctrl
-    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // raw input
-    tty.c_oflag &= ~OPOST;              // raw output
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        perror("Error from tcsetattr");
-        close(fd);
-        return -1;
-    }
-
-    return fd;
+    return (fd);
 }
 
-int expb_f(const gsl_vector * x, void *data, gsl_vector * f) {
-    double x_est = gsl_vector_get(x, 0);
-    double y_est = gsl_vector_get(x, 1);
-    double *d = (double *)data;
+void configure_port(int fd) {
+    struct termios options;
 
-    for (int i = 0; i < 4; i++) {
-        double dx = x_est - anchor_positions[i].x;
-        double dy = y_est - anchor_positions[i].y;
-        double dist = sqrt(dx * dx + dy * dy);
-        gsl_vector_set(f, i, (dist - d[i]));
-    }
-    return GSL_SUCCESS;
-}
+    // Get the current options for the port
+    tcgetattr(fd, &options);
 
-void solve_position(double *x, double *y) {
-    const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
-    gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
-    const size_t n = 4;  // number of equations
-    const size_t p = 2;  // number of unknowns (x, y)
+    // Set the baud rates to 115200
+    cfsetispeed(&options, B115200);
+    cfsetospeed(&options, B115200);
 
-    gsl_vector *f;
-    gsl_matrix *covar = gsl_matrix_alloc(p, p);
-    double x_init[2] = { 0.0, 0.0 };  // Initial guess
-    gsl_vector_view x = gsl_vector_view_array(x_init, p);
-    gsl_multifit_nlinear_workspace *w;
-    gsl_multifit_nlinear_fdf fdf;
-    int status, info;
+    // Enable the receiver and set local mode
+    options.c_cflag |= (CLOCAL | CREAD);
 
-    fdf.f = expb_f;
-    fdf.df = NULL;   // Set to NULL for finite-difference Jacobian.
-    fdf.fvv = NULL;  // Not using geodesic acceleration
-    fdf.n = n;
-    fdf.p = p;
-    fdf.params = &ranges;
+    // Set 8N1 (no parity bit, 1 stop bit, 8 data bits)
+    options.c_cflag &= ~PARENB;
+    options.c_cflag &= ~CSTOPB;
+    options.c_cflag &= ~CSIZE;
+    options.c_cflag |= CS8;
 
-    w = gsl_multifit_nlinear_alloc(T, &fdf_params, n, p);
-    gsl_multifit_nlinear_init(&x.vector, &fdf, w);
-    gsl_multifit_nlinear_driver(20, 1e-8, 1e-8, 0, NULL, &info, w);
+    // Disable hardware flow control
+    options.c_cflag &= ~CRTSCTS;
 
-    f = gsl_multifit_nlinear_residual(w);
-    gsl_vector_view xview = gsl_multifit_nlinear_position(w);
-    *x = gsl_vector_get(&xview.vector, 0);
-    *y = gsl_vector_get(&xview.vector, 1);
+    // Choose raw input
+    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
-    gsl_multifit_nlinear_free(w);
-    gsl_matrix_free(covar);
+    // Disable software flow control
+    options.c_iflag &= ~(IXON | IXOFF | IXANY);
+
+    // Set the new options for the port
+    tcsetattr(fd, TCSANOW, &options);
 }
 
 int main(void) {
-    int fd = open_serial("/dev/tty.usbserial-02619786");
-    if (fd < 0) return -1;
+    signal(SIGINT, signal_handler); // Setup the signal handler for SIGINT
 
-    char buf[1024];
-    int n;
-    double x, y;
+    fd = open_port();
+    if (fd == -1) {
+        fprintf(stderr, "Failed to open serial port\n");
+        exit(EXIT_FAILURE);
+    }
+
+    configure_port(fd);
 
     while (1) {
-        n = read(fd, buf, sizeof(buf) - 1);
-        if (n > 0) {
-            buf[n] = '\0';
-            process_line(buf);
-            solve_position(&x, &y);  // Call function to solve position
-            printf("Estimated Position: (%.2f, %.2f)\n", x, y);
+        char buffer[256];  // Buffer for where to store the data
+        int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
+        if (n < 0) {
+            perror("Read failed - ");
+            continue;
+        } else if (n == 0) {
+            printf("No data on port\n");
+        } else {
+            buffer[n] = '\0';  // Null terminate the string
+            printf("Read %d bytes: %s\n", n, buffer);
         }
     }
+
     close(fd);
-    return 0;
+    return EXIT_SUCCESS;
 }
