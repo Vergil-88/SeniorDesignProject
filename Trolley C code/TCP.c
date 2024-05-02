@@ -188,11 +188,11 @@ int main(int argc, char *argv[]) {
     // gtk_main();
 
     
-    while (1) {
+    // while (1) {
 
-        send_command(sockfd,-30,0);
+    //     send_command(sockfd,-30,0);
 
-    }
+    // }
     
 
     close(sockfd);

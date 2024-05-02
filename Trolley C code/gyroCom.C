@@ -17,7 +17,7 @@ void signal_handler(int sig) {
 
 int open_port(void) {
     // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
-    fd = open("/dev/tty.usbmodem11401", O_RDWR | O_NOCTTY | O_NDELAY);
+    fd = open("/dev/tty.usbmodem1401", O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd == -1) {
         perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
     } else {
@@ -58,7 +58,7 @@ void configure_port(int fd) {
     tcsetattr(fd, TCSANOW, &options);
 }
 
-int main(void) {
+void initCompass(void){
     signal(SIGINT, signal_handler); // Setup the signal handler for SIGINT
 
     fd = open_port();
@@ -68,21 +68,42 @@ int main(void) {
     }
 
     configure_port(fd);
-
-    while (1) {
-        char buffer[256];  // Buffer for where to store the data
-        int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
-        if (n < 0) {
-            perror("Read failed - ");
-            continue;
-        } else if (n == 0) {
-            printf("No data on port\n");
-        } else {
-            buffer[n] = '\0';  // Null terminate the string
-            printf("Read %d bytes: %s\n", n, buffer);
-        }
-    }
-
-    close(fd);
-    return EXIT_SUCCESS;
 }
+
+char* readCompass(void) {
+    static char compassbuffer[256];
+    memset(compassbuffer, 0, sizeof(compassbuffer)); // Clear the buffer
+
+    char tempChar;
+    int i = 0;
+    while (read(fd, &tempChar, 1) > 0 && tempChar != '\n' && i < sizeof(compassbuffer) - 1) {
+        compassbuffer[i++] = tempChar;
+    }
+    compassbuffer[i] = '\0'; // Ensure the buffer is null-terminated
+
+    if (i == 0) { // Check if no data was read
+        return NULL;
+    }
+    return compassbuffer;
+}
+
+
+//     configure_port(fd);
+
+//     while (1) {
+//         char buffer[256];  // Buffer for where to store the data
+//         int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
+//         if (n < 0) {
+//             perror("Read failed - ");
+//             continue;
+//         } else if (n == 0) {
+//             printf("No data on port\n");
+//         } else {
+//             buffer[n] = '\0';  // Null terminate the string
+//             printf("%s\n",buffer);
+//         }
+//     }
+
+//     close(fd);
+//     return EXIT_SUCCESS;
+// }
