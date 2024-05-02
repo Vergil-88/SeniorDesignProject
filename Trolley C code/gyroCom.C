@@ -1,109 +1,80 @@
-#include <stdio.h>      // Standard input/output definitions
-#include <stdlib.h>     // Standard library for using exit function
-#include <string.h>     // String function definitions
-#include <unistd.h>     // UNIX standard function definitions
-#include <fcntl.h>      // File control definitions
-#include <errno.h>      // Error number definitions
-#include <termios.h>    // POSIX terminal control definitions
-#include <signal.h>     // Signal handling definitions
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <termios.h>
 
-int fd; // File descriptor for the port, make it global for signal handler
-
-void signal_handler(int sig) {
-    printf("\nTerminating...\n");
-    close(fd);
-    exit(EXIT_SUCCESS);
-}
-
-int open_port(void) {
-    // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
-    fd = open("/dev/tty.usbmodem1101", O_RDWR | O_NOCTTY | O_NDELAY);
+int open_serial_port(const char* device) {
+    int fd = open(device, O_RDWR | O_NOCTTY);
     if (fd == -1) {
-        perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
-    } else {
-        fcntl(fd, F_SETFL, 0); // Clear all flags on descriptor, enable direct I/O
-    }
-    return (fd);
-}
-
-void configure_port(int fd) {
-    struct termios options;
-
-    // Get the current options for the port
-    tcgetattr(fd, &options);
-
-    // Set the baud rates to 115200
-    cfsetispeed(&options, B115200);
-    cfsetospeed(&options, B115200);
-
-    // Enable the receiver and set local mode
-    options.c_cflag |= (CLOCAL | CREAD);
-
-    // Set 8N1 (no parity bit, 1 stop bit, 8 data bits)
-    options.c_cflag &= ~PARENB;
-    options.c_cflag &= ~CSTOPB;
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
-
-    // Disable hardware flow control
-    options.c_cflag &= ~CRTSCTS;
-
-    // Choose raw input
-    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-
-    // Disable software flow control
-    options.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-    // Set the new options for the port
-    tcsetattr(fd, TCSANOW, &options);
-}
-
-void initCompass(void){
-    signal(SIGINT, signal_handler); // Setup the signal handler for SIGINT
-
-    fd = open_port();
-    if (fd == -1) {
-        fprintf(stderr, "Failed to open serial port\n");
-        exit(EXIT_FAILURE);
+        perror("open_serial_port: Unable to open serial port");
+        return -1;
     }
 
-    configure_port(fd);
+    struct termios tty;
+    if (tcgetattr(fd, &tty) != 0) {
+        perror("open_serial_port: tcgetattr");
+        close(fd);
+        return -1;
+    }
+
+    cfsetospeed(&tty, B115200);
+    cfsetispeed(&tty, B115200);
+
+    tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity
+    tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used
+    tty.c_cflag &= ~CSIZE; // Clear all the size bits
+    tty.c_cflag |= CS8; // 8 bits per byte
+    tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control
+    tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines
+
+    tty.c_lflag &= ~ICANON;
+    tty.c_lflag &= ~ECHO; // Disable echo
+    tty.c_lflag &= ~ECHOE; // Disable erasure
+    tty.c_lflag &= ~ECHONL; // Disable new-line echo
+    tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+
+    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes
+    tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+
+    tty.c_cc[VTIME] = 10; // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+    tty.c_cc[VMIN] = 0;
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        perror("open_serial_port: tcsetattr");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
 }
 
-char* readCompass(void) {
-    static char compassbuffer[256];
-    memset(compassbuffer, 0, sizeof(compassbuffer)); // Clear the buffer
-
-    char tempChar;
-    int i = 0;
-    while (read(fd, &tempChar, 1) > 0 && tempChar != '\n' && i < sizeof(compassbuffer) - 1) {
-        compassbuffer[i++] = tempChar;
-    }
-    compassbuffer[i] = '\0'; // Ensure the buffer is null-terminated
-
-    if (i == 0) { // Check if no data was read
-        return NULL;
-    }
-    return compassbuffer;
+void process_line(const char* line, double* latest_angle_value) {
+    char* endptr;
+    *latest_angle_value = strtod(line, &endptr);
+    // if (line == endptr)
+        // printf("Could not convert angle value to float: '%s'\n", line);
 }
 
+double readCompass(int sp){
 
-//     configure_port(fd);
+    char read_buf[256];
+    double latest_angle_value = 0.0;
 
-//     while (1) {
-//         char buffer[256];  // Buffer for where to store the data
-//         int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
-//         if (n < 0) {
-//             perror("Read failed - ");
-//             continue;
-//         } else if (n == 0) {
-//             printf("No data on port\n");
-//         } else {
-//             buffer[n] = '\0';  // Null terminate the string
-//             printf("%s\n",buffer);
-//         }
-//     }
 
-//     close(fd);
-//     return EXIT_SUCCESS;
-// }
+    int num_bytes = read(sp, read_buf, sizeof(read_buf) - 1);
+    if (num_bytes < 0) {
+        perror("Error reading: ");
+        return 1;
+    }
+    if (num_bytes > 0) {
+        read_buf[num_bytes] = '\0';
+        process_line(read_buf, &latest_angle_value);
+    }
+    return latest_angle_value;
+    sleep(0.1); // Sleep for 100 milliseconds
+}
