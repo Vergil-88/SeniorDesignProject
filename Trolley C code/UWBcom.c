@@ -25,7 +25,7 @@ void process_line(char *line) {
     }
 }
 
-int main() {
+int initUWB(){
     int fd;
     struct termios options;
     char buffer[256];
@@ -52,18 +52,36 @@ int main() {
     options.c_oflag &= ~OPOST;
     tcsetattr(fd, TCSANOW, &options);
 
-    while (1) {
-        // Read a line from the serial port
-        memset(buffer, 0, 256);
+    return fd;
+}
+
+float* readUWB(int fd, float* arr){
+    
+    char buffer[256];
+    ssize_t bytes_read;
+
+    memset(buffer, 0, 256);
         bytes_read = read(fd, buffer, 255);
         if (bytes_read > 0) {
             buffer[bytes_read - 1] = '\0'; // Replace the newline char with null char
             process_line(buffer);
-            printf("X: %f\n", X);
-            printf("Y: %f\n", Y);
-        }
-    }
 
-    close(fd);
-    return 0;
+            // printf("%f      %f \n", X, Y);
+            arr[0] = X;
+            arr[1] = Y;
+        }
+    return arr;
 }
+
+// int main() {
+    
+
+    
+//     while (1) {
+//         // Read a line from the serial port
+        
+//     }
+
+//     // close(fd);
+//     // return 0;
+// }

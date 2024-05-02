@@ -1,54 +1,32 @@
 import serial
 import time
 
-angle_values = 0
+# Variable to store the latest angle value
+latest_angle_value = None
 
 def process_line(line):
-    global angle_values
-    # Check if the line contains the angle value
-    if "Angle:" in line:
-        # Extract the angle value after the "Angle:" string
-        try:
-            # Split the line by colon and strip to remove any leading/trailing spaces
-            angle_value = line.split("Angle:")[1].strip()
-            # Convert the extracted value to a float and store it
-            angle_values=(float(angle_value))
-        except ValueError:
-            # Handle cases where the conversion to float fails
-            print(f"Could not convert angle value to float: '{line}'")
+    global latest_angle_value
+    try:
+        # Convert the received line to a float and store it as the latest angle value
+        latest_angle_value = float(line.strip())
+    except ValueError:
+        # Handle cases where the conversion to float fails
+        print(f"Could not convert angle value to float: '{line}'")
 
-
-
-
-
-
-# if __name__ == '__main__':
 def main():    
-    # ser = serial.Serial('COM11', 115200, timeout=1)
-    ser = serial.Serial('/dev/tty.usbmodem11301', 115200, timeout=1)
+    # Initialize serial connection
+    ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
 
-
-    # try:
     while True:
+        try:
+            # Check if there is data waiting in the serial buffer
+            if ser.in_waiting > 0:
+                received_data = ser.readline().decode('utf-8')
+                process_line(received_data)
+                print("Current angle value:", latest_angle_value)
+        except KeyboardInterrupt:
+            print("Exiting program.")
+            break
 
-            # Read and display the values received from Arduino
-            if ser.in_waiting >= 0:
-                received_data = ser.readline().decode('utf-8').rstrip()
-                # print(received_data)
-                
-            process_line(received_data)   
-        
-            # print("Extracted angle values:", angle_values)
-                       
-    # except KeyboardInterrupt:
-    #     ser.write(b"0 0\r\n")
-    #     print("Exiting program.")
-    # finally:
-    #     ser.write(b"0 0\r\n")
-    #     ser.close()
-        
-        
-# main()
-
-
-    
+if __name__ == '__main__':
+    main()
