@@ -1,88 +1,69 @@
-#include <stdio.h>      // Standard input/output definitions
-#include <stdlib.h>     // Standard library for using exit function
-#include <string.h>     // String function definitions
-#include <unistd.h>     // UNIX standard function definitions
-#include <fcntl.h>      // File control definitions
-#include <errno.h>      // Error number definitions
-#include <termios.h>    // POSIX terminal control definitions
-#include <signal.h>     // Signal handling definitions
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <errno.h>
 
-int fd; // File descriptor for the port, make it global for signal handler
+float X = 0.0;
+float Y = 0.0;
 
-void signal_handler(int sig) {
-    printf("\nTerminating...\n");
-    close(fd);
-    exit(EXIT_SUCCESS);
-}
-
-int open_port(void) {
-    // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
-    fd = open("/dev/tty.usbserial-02619786", O_RDWR | O_NOCTTY | O_NDELAY);
-    if (fd == -1) {
-        perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
-    } else {
-        fcntl(fd, F_SETFL, 0); // Clear all flags on descriptor, enable direct I/O
+void process_line(char *line) {
+    char *part;
+    part = strtok(line, " ");
+    while(part != NULL) {
+        if(strstr(part, "X=") != NULL) {
+            char *x_val = strchr(part, '=') + 1;
+            X = atof(x_val);
+        }
+        else if(strstr(part, "Y=") != NULL) {
+            char *y_val = strchr(part, '=') + 1;
+            Y = atof(y_val);
+        }
+        part = strtok(NULL, " ");
     }
-    return (fd);
 }
 
-void configure_port(int fd) {
+int main() {
+    int fd;
     struct termios options;
+    char buffer[256];
+    ssize_t bytes_read;
 
-    // Get the current options for the port
+    // Open the serial port
+    fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+    if (fd == -1) {
+        perror("open_port: Unable to open /dev/ttyUSB0 - ");
+        return -1;
+    }
+
+    // Configure the serial port
     tcgetattr(fd, &options);
-
-    // Set the baud rates to 115200
     cfsetispeed(&options, B115200);
     cfsetospeed(&options, B115200);
-
-    // Enable the receiver and set local mode
     options.c_cflag |= (CLOCAL | CREAD);
-
-    // Set 8N1 (no parity bit, 1 stop bit, 8 data bits)
     options.c_cflag &= ~PARENB;
     options.c_cflag &= ~CSTOPB;
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
-
-    // Disable hardware flow control
-    options.c_cflag &= ~CRTSCTS;
-
-    // Choose raw input
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-
-    // Disable software flow control
     options.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-    // Set the new options for the port
+    options.c_oflag &= ~OPOST;
     tcsetattr(fd, TCSANOW, &options);
-}
-
-int main(void) {
-    signal(SIGINT, signal_handler); // Setup the signal handler for SIGINT
-
-    fd = open_port();
-    if (fd == -1) {
-        fprintf(stderr, "Failed to open serial port\n");
-        exit(EXIT_FAILURE);
-    }
-
-    configure_port(fd);
 
     while (1) {
-        char buffer[256];  // Buffer for where to store the data
-        int n = read(fd, buffer, sizeof(buffer));  // Read up to 255 characters from the port if they are there
-        if (n < 0) {
-            perror("Read failed - ");
-            continue;
-        } else if (n == 0) {
-            printf("No data on port\n");
-        } else {
-            buffer[n] = '\0';  // Null terminate the string
-            printf("Read %d bytes: %s\n", n, buffer);
+        // Read a line from the serial port
+        memset(buffer, 0, 256);
+        bytes_read = read(fd, buffer, 255);
+        if (bytes_read > 0) {
+            buffer[bytes_read - 1] = '\0'; // Replace the newline char with null char
+            process_line(buffer);
+            printf("X: %f\n", X);
+            printf("Y: %f\n", Y);
         }
     }
 
     close(fd);
-    return EXIT_SUCCESS;
+    return 0;
 }
