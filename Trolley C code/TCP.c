@@ -111,7 +111,7 @@ int receive(int s, int debug) {
         }
     }
 
-    return 0;
+    // return 0;
 }
 
 ///////////////////////////////GUI method///////////////////////////////
@@ -164,20 +164,20 @@ void *receive_thread_func(void *arg) {
 }
 
 ///////////////////////////////START OF MAIN///////////////////////////////
-int main(int argc, char *argv[]) {
+//int main(int argc, char *argv[]) {
     // gtk_init(&argc, &argv);
 
-    sockfd = TCP_init();
-    if (sockfd < 0) {
-        fprintf(stderr, "Failed to initialize TCP connection\n");
-        return 1;
-    }
+    // sockfd = TCP_init();
+    // if (sockfd < 0) {
+    //     fprintf(stderr, "Failed to initialize TCP connection\n");
+    //     return 1;
+    // }
 
-    pthread_t recv_thread;
-    if (pthread_create(&recv_thread, NULL, receive_thread_func, &sockfd) != 0) {
-        fprintf(stderr, "Failed to create receive thread\n");
-        return 1;
-    }
+    // pthread_t recv_thread;
+    // if (pthread_create(&recv_thread, NULL, receive_thread_func, &sockfd) != 0) {
+    //     fprintf(stderr, "Failed to create receive thread\n");
+    //     return 1;
+    // }
 
     // GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     // g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     // }
     
 
-    close(sockfd);
+    // close(sockfd);
 
-    return 0;
-}
+    // return 0;
+//}

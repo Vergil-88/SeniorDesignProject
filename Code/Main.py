@@ -6,16 +6,16 @@ import Comm
 import CommUWB
 import time
 
-# my_thread = threading.Thread(target=CommUWB.main)
-# # Start the thread
-# my_thread.start()  
+my_thread = threading.Thread(target=CommUWB.main)
+# Start the thread
+my_thread.start()  
 
-my_GY_thread = threading.Thread(target=Comm.main)
-my_GY_thread.start() 
+# my_GY_thread = threading.Thread(target=Comm.main)
+# my_GY_thread.start() 
 
 start_time = time.time()
 
-sleep(3)
+# sleep(3)
 
 i = 0
 S=TCPLink.TCP_init()
@@ -42,8 +42,8 @@ avgDis,avgX,avgY, Encdr_angle,timeDis,dx,dy, prv_time, Encdr_Distance, Desired_A
 
 def postion_xy(angle , distance):
     angle = (math.pi*angle) / 180
-    dx = distance * math.cos(angle)
-    dy = distance * math.sin(angle)
+    dy = distance * math.cos(angle)
+    dx = distance * math.sin(angle)
     return dx, dy
 
 
@@ -115,11 +115,15 @@ TCPLink.send(S,0,0)
 
 encoderDis=0
 
-# Distance, Angle = calc_dis_ang(CommUWB.avg_x, CommUWB.avg_y, 1, -1)
-
-Distance, Angle = calc_dis_ang(0 , 0, 1.5, 1.5)
+Distance, Angle = calc_dis_ang(CommUWB.X, CommUWB.Y, -1, 1)
+Angle = 90 - Angle
+# Distance, Angle = calc_dis_ang(0 , 0, 1.5, 1.5)
 
 while True:
+
+
+
+# print("X: %d|| Y: %d",uwb.x ,uwb.y)
 
 
 
@@ -131,12 +135,12 @@ while True:
 
     TCPLink.receive(S,False)     
 
-    gyro_Angle=Comm.angle_values
+    # gyro_Angle=Comm.angle_values
 
     cntR_int=TCPLink.cntR_int
     cntL_int=TCPLink.cntL_int
 
-    # Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
+    Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
     
     timeAngle = ((time.time() - start_time) * 360) / 50 #calculate current angle using time
     
@@ -144,7 +148,7 @@ while True:
     
 
 
-    print("G    ",gyro_Angle)
+    # print("G    ",gyro_Angle)
     print("EN   ",Encdr_angle)
     # print("|||||||||||||||||||||")
 
@@ -157,7 +161,7 @@ while True:
     if  abs(Encdr_angle)<=abs(Angle):
         if Angle < 0 and Angle != 0:
             Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
-            avrgTheta = (Encdr_angle + gyro_Angle) / 2
+            # avrgTheta = (Encdr_angle + gyro_Angle) / 2
             TCPLink.send(S,0,-20)
 
             cntR_prev2 = cntR_int
@@ -171,7 +175,7 @@ while True:
         elif Angle != 0 :
             TCPLink.send(S,0,20)
             Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
-            avrgTheta = (Encdr_angle + gyro_Angle) / 2
+            # avrgTheta = (Encdr_angle + gyro_Angle) / 2
             cntR_prev2 = cntR_int
             cntL_prev2 = cntL_int
 
@@ -193,7 +197,7 @@ while True:
         
         TCPLink.send(S,20,0)
 
-        dx, dy = postion_xy(avrgTheta , avgDis)
+        dx, dy = postion_xy(Encdr_angle , avgDis)
 
         # avgX = (dx*0.7 )+(CommUWB.avg_x * 0.3)
         # avgY = (dy*0.7 )+(CommUWB.avg_y * 0.3)
@@ -218,19 +222,22 @@ while True:
     else:
         
         TCPLink.send(S,0,0)
-        break
+        # break
     
     
     
     # print("timeDis",timeDis)
     # print("X= ",avgX," Y= ",avgY)
     print("enX= ",dx," enY= ",dy)
-    print("uwbX= ",CommUWB.avg_x," uwbY= ",CommUWB.avg_y)
+    print("uwbX= ",CommUWB.X," uwbY= ",CommUWB.Y)
     # print("ED= ",Encdr_Distance)
     print("encoderDis", encoderDis)
     print("avrgTheta",avrgTheta)
     print("avgDis= ",avgDis)
 
+
+    print("Distance = ",Distance)
+    print("Angle = ",Angle)
     # break
     
 

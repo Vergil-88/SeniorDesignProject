@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include "gyroCom.C"
+#include "TCP.c"
 #include <ctype.h>  // For isdigit()
 
 // #define PI 3.14159265358979323846
@@ -93,23 +94,67 @@ double calc_dis_ang(double x1, double y1, double x2, double y2) {
 
 
 int main(void) {
-    initCompass(); // Initialize and configure the compass serial port
 
+    int sockfd = TCP_init();
+    if (sockfd < 0) {
+        fprintf(stderr, "Failed to initialize TCP connection\n");
+        return 1;
+    }
+    send_command(sockfd,0,0);
+
+
+     receive(sockfd,0);
+
+    // pthread_t recv_thread;
+    //     if (pthread_create(&recv_thread, NULL, receive_thread_func, &sockfd) != 0) {
+    //     fprintf(stderr, "Failed to create receive thread\n");
+    //     return 1;
+    //     }
+
+
+    initCompass(); // Initialize and configure the compass serial port
+    double value;
+
+    send_command(sockfd,0,0);
+
+    printf("/n befro the loop");
     while (1) {
+        // send_command(sockfd,0,0);
+        // pthread_t recv_thread;
+        // if (pthread_create(&recv_thread, NULL, receive_thread_func, &sockfd) != 0) {
+        // fprintf(stderr, "Failed to create receive thread\n");
+        // return 1;
+        // }
+
+        receive(sockfd,0);
+
+        printf("\n while");
+
         char* line = readCompass();
         if (line && (isdigit(line[0]) || line[0] == '-')) {  // Check if the line starts with a digit or a minus sign
            // printf("Read line: %s\n", line);
             double value = strtod(line, NULL);
-            printf("Converted value: %f\n", value);
-        } else if (line) {
-           // printf("Line does not start with a number or minus sign: %s\n", line);
-        } else {
-            printf("No data read or only newline was read.\n");
+            printf("\n Converted value: %f\n", value);
         }
-        //sleep(1); // Delay for a second to manage the loop timing
+        printf("\n fuck C");
+        printf("\n%d", value <= 45.00);
+        if(value <= 45.00){
+            send_command(sockfd,0,10);
+
+            printf("\n hello");
+        }
+        else{
+            send_command(sockfd,0,0);
+            
+            printf("\n else");
+            break;
+        }
+
+        
     }
 
-    return 0;
+    
 }
+
 
 

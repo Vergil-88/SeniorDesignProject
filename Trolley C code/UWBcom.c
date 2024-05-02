@@ -32,7 +32,7 @@ int main() {
     ssize_t bytes_read;
 
     // Open the serial port
-    fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+    fd = open("/dev/tty.usbserial-02619786", O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd == -1) {
         perror("open_port: Unable to open /dev/ttyUSB0 - ");
         return -1;

@@ -1,6 +1,9 @@
 import serial
 import time
 
+X=0
+Y=0
+
 def process_line(line):
     global X, Y
     # Split the line into parts by spaces
@@ -21,7 +24,7 @@ def process_line(line):
 
 def main():
     # Configure the serial connection
-    ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+    ser = serial.Serial('/dev/tty.usbserial-02619786', 115200, timeout=1)
     while True:
         # Read a line from the serial port
         if ser.in_waiting > 0:
@@ -30,11 +33,11 @@ def main():
             # Process the received data to extract X and Y
             process_line(received_data)
             # Print the extracted values
-            print("X:",X)
-            print ("Y:",Y)
+            # print("X:",X)
+            # print ("Y:",Y)
 
-if __name__ == '__main__':
-    # Global variables for storing the X and Y coordinates
-    X = 0
-    Y = 0
-    main()
+# if __name__ == '__main__':
+#     # Global variables for storing the X and Y coordinates
+#     X = 0
+#     Y = 0
+# main()

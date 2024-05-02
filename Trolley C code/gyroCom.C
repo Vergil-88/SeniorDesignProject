@@ -17,7 +17,7 @@ void signal_handler(int sig) {
 
 int open_port(void) {
     // Open the serial port read/write, with no controlling terminal, and don't wait for a connection
-    fd = open("/dev/tty.usbmodem1401", O_RDWR | O_NOCTTY | O_NDELAY);
+    fd = open("/dev/tty.usbmodem1101", O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd == -1) {
         perror("open_port: Unable to open /dev/tty.usbmodem1101 - ");
     } else {
