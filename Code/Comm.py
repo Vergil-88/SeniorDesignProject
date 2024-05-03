@@ -15,7 +15,7 @@ def process_line(line):
 
 def main():    
     # Initialize serial connection
-    ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+    ser = serial.Serial('/dev/tty.usbmodem11301', 115200, timeout=1)
 
     while True:
         try:
@@ -23,10 +23,10 @@ def main():
             if ser.in_waiting > 0:
                 received_data = ser.readline().decode('utf-8')
                 process_line(received_data)
-                print("Current angle value:", latest_angle_value)
+                # print("Current angle value:", latest_angle_value)
         except KeyboardInterrupt:
-            print("Exiting program.")
+            # print("Exiting program.")
             break
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
