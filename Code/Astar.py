@@ -11,8 +11,8 @@ class Cell:
 		self.h = 0 # Heuristic cost from this cell to destination
 
 # Define the size of the grid
-ROW = 18
-COL = 18
+ROW = 10
+COL = 10
 
 # Check if a cell is valid (within the grid)
 def is_valid(row, col):
@@ -161,13 +161,14 @@ def a_star_search(grid, src, dest):
 
 
 def coordinates_to_array_index(x, y):
-    j = int((x * 2) + 9)
-    i = int(9 - (y * 2))
+    j = int(x + 5)
+    i = int(5 - y)
     return i, j
 
+
 def array_index_to_coordinates(i, j):
-    x = (j - 9) * 0.5
-    y = (9 - i) * 0.5
+    x = (j - 5) * 1
+    y = (5 - i) * 1
     return x, y
 
 
@@ -175,16 +176,17 @@ def array_index_to_coordinates(i, j):
 def SetBlocked(x,y):
     global grid
     i,j=coordinates_to_array_index(x,y)
-    
-    grid[i,j]=0
 
+
+        
+    grid[i][j]=0
 
 
     
   
 
 
-grid = [[1 for _ in range(18)] for _ in range(18)]
+grid = [[1 for _ in range(10)] for _ in range(10)]
 
 
 
@@ -206,6 +208,7 @@ def main(src, dest):
 
 
     # Run the A* search algorithm
+    
     x=a_star_search(grid, src, dest)
     
     i_path, j_path = zip(*x)
@@ -217,9 +220,10 @@ def main(src, dest):
     for i in range(len(i_path)):
         x_path[i], y_path[i] = array_index_to_coordinates(i_path[i], j_path[i])
     
+    # print(x_path,y_path)
 
     
     return x_path,y_path
 
-if __name__ == "__main__":
-	main()
+# if __name__ == "__main__":
+# 	main([0 ,0],[-2,-2])

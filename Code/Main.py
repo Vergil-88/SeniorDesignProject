@@ -16,7 +16,7 @@ my_GY_thread.start()
 
 start_time = time.time()
 
-sleep(3)
+sleep(10)
 
 i = 0
 S=TCPLink.TCP_init()
@@ -106,10 +106,18 @@ def calc_dis_ang(x1, y1, x2, y2): # Distance and angle USING THE BEACONS
     angle_radians = math.atan2(y2 - y1, x2 - x1)
     
     # Convert angle to degrees
-    angle_degrees = math.degrees(angle_radians)
     
+   
+       
+    angle_degrees = math.degrees(angle_radians)
+        
+        
+       
+        
+        
+        
+   
     return distance, angle_degrees
-
 TCPLink.send(S,0,0)
 
 
@@ -126,7 +134,7 @@ def goAngle(Angle):
     
    
     
-    if Angle < 0 and Angle != 0:
+    if Angle < 0 :
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int) 
          
         avrgTheta = (Encdr_angle + gyro_Angle) / 2
@@ -141,7 +149,7 @@ def goAngle(Angle):
         if cntL_prev2 > 4500:
             cntL_prev2-=9000
 
-    elif Angle != 0 :
+    elif Angle > 0 :
         TCPLink.send(S,0,20)
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
         avrgTheta = (Encdr_angle + gyro_Angle) / 2
@@ -154,6 +162,14 @@ def goAngle(Angle):
         if cntL_prev2 > 4500:
             cntL_prev2-=9000            
         # break
+        
+    elif Angle == 0:
+        if gyro_Angle<0:
+            TCPLink.send(S,0,20)
+        else:
+            TCPLink.send(S,0,-20)
+            
+            
     else:
         TCPLink.send(S,0,0)
 
@@ -166,7 +182,7 @@ def goDis(dis):
         TCPLink.send(S,20,0)
         # dx, dy = postion_xy(Encdr_angle , avgDis)
         dx, dy = postion_xy(gyro_Angle , avgDis)
-
+        
         avgX = (dx*0.7 )+(CommUWB.X * 0.3)
         avgY = (dy*0.7 )+(CommUWB.Y * 0.3)
 
@@ -189,26 +205,39 @@ def goDis(dis):
 
 def goPoint(srcX,srcY,destX,destY):
 
-    global new_time, dT,prv_time,gyro_Angle,Encdr_angle,timeAngle,avrgTheta,avgDis
+    global new_time, dT,prv_time,gyro_Angle,Encdr_angle,timeAngle,avrgTheta,avgDis,Distance, Angle
 
     Distance, Angle = calc_dis_ang(srcX,srcY, destX, destY)
-    Angle = 90 - Angle
+    # Angle = 90-Angle
+
     avgDis=0
     TCPLink.send(S,0,0)
+    print(Angle)
     while True:
         # TCPLink.send(S,0,0)
         calc()
+        # print("timeDis",timeDis)
         
-        if  abs(gyro_Angle)<=abs(Angle):
+        
+        # elif Angle == 0:
+    #     if gyro_Angle<0:
+    #         TCPLink.send(S,0,20)
+    #     else:
+    #         TCPLink.send(S,0,-20)
+    
+    
+        if  abs(gyro_Angle-Angle)>=5:
             goAngle(Angle)
         
-        elif ((avgDis)<=Distance) :
+        elif ((timeDis)<=Distance) :
             goDis(Distance)
         else:
             avgDis=0
             break
 
-        print("avgDis= ",avgDis)
+        # print("avgDis= ",avgDis)
+
+
 
 dT=0
 new_time=0
@@ -254,13 +283,19 @@ uwbY_prev = CommUWB.Y
 
 x_path=[]
 y_path=[]
+print(CommUWB.X, CommUWB.Y)
 
-src =  [CommUWB.X, CommUWB.Y]
-dest = [-3, 2]
+src =  [round(CommUWB.X), round(CommUWB.Y)]
+# src =  [0, 0]
+dest = [-2, 1]
+
+Astar.SetBlocked(-1,-1)
+
 
 x_path,y_path=Astar.main(src, dest)
-
-j=0
+print(x_path)
+print(y_path)
+j=1
 
 enter=0
 
@@ -272,22 +307,22 @@ while True:
 
     
 
-    new_time=time.time()
+    # new_time=time.time()
 
-    dT=new_time-prv_time
+    # dT=new_time-prv_time
 
-    prv_time = new_time
+    # prv_time = new_time
 
-    TCPLink.receive(S,False)     
+    # TCPLink.receive(S,False)     
 
-    gyro_Angle=Comm.latest_angle_value
+    # gyro_Angle=Comm.latest_angle_value
 
-    cntR_int=TCPLink.cntR_int
-    cntL_int=TCPLink.cntL_int
+    # cntR_int=TCPLink.cntR_int
+    # cntL_int=TCPLink.cntL_int
 
-    Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
+    # Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)     
     
-    timeAngle = ((time.time() - start_time) * 360) / 50 #calculate current angle using time
+    # timeAngle = ((time.time() - start_time) * 360) / 50 #calculate current angle using time
     
 
     
@@ -296,17 +331,21 @@ while True:
     # print("G    ",gyro_Angle)
     # print("EN   ",Encdr_angle)
     # # print("|||||||||||||||||||||")
+    
+    if j == len(x_path):
+        # goPoint(CommUWB.X,CommUWB.Y,dest[0],dest[1])
+        break
 
+    goPoint(x_path[j-1],y_path[j-1], x_path[j], y_path[j])
+    
+    
+    
     
 
     
-   
 
-    goPoint(x_path[j],y_path[j], x_path[j+1], y_path[j+1])
-
-    if len(src) > j:
-        j+=1
-    avgDis=0
+  
+    # avgDis=0
     # print("uwb_angle= ",uwb_angle)
     # print("X= ",avgX," Y= ",avgY)
     # # print("enX= ",dx," enY= ",dy)
@@ -317,20 +356,32 @@ while True:
     # print("avgDis= ",avgDis)
 
 
-    # print("Distance = ",Distance)
-    # print("Angle = ",Angle)
+    print("Distance = ",Distance)
+    print("Angle = ",Angle)
 
     print("j= ",j)
-    print(x_path[j],y_path[j], x_path[j+1], y_path[j+1])
+    print(x_path[j-1],y_path[j-1])
+    print(x_path[j], y_path[j])
+    
     
     timeDis=0
+    dT=0
+    new_time=time.time()
     encoderDis=0
     
 
     
+    if j< len(x_path):
+        j+=1
+    
+    
+
+    
 
    
-   
+    # eval(input())
+    
+    # S=TCPLink.TCP_init()
 
     
 
@@ -351,8 +402,7 @@ while True:
     
     
     
-    
-    # break
+
     
 
 # print("X: %d|| Y: %d",uwb.x ,uwb.y)

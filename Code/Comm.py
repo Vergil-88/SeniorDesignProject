@@ -15,7 +15,7 @@ def process_line(line):
 
 def main():    
     # Initialize serial connection
-    ser = serial.Serial('/dev/tty.usbmodem11301', 115200, timeout=1)
+    ser = serial.Serial('COM11', 115200, timeout=1)
 
     while True:
         try:

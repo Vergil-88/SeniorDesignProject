@@ -24,7 +24,7 @@ def process_line(line):
 
 def main():
     # Configure the serial connection
-    ser = serial.Serial('/dev/tty.usbserial-02619786', 115200, timeout=1)
+    ser = serial.Serial('COM8', 115200, timeout=1)
     while True:
         # Read a line from the serial port
         if ser.in_waiting > 0:
