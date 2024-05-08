@@ -12,11 +12,12 @@ my_thread = threading.Thread(target=CommUWB.main)
 my_thread.start()  
 
 my_GY_thread = threading.Thread(target=Comm.main)
-my_GY_thread.start() 
+# my_GY_thread.start() 
+gyro_Angle=0
 
 start_time = time.time()
 
-sleep(10)
+sleep(5)
 
 i = 0
 S=TCPLink.TCP_init()
@@ -92,7 +93,7 @@ def encoder_Dcalcs(cntR,cntL,cntR_prev,cntL_prev):
 
 
     
-    Encdr_Distance = dAvg/166
+    Encdr_Distance = (dAvg/166)
     return Encdr_Distance
 
 
@@ -130,15 +131,18 @@ def angleUWB(x1, y1, x2, y2):
 def goAngle(Angle):
     global new_time, dT,prv_time,gyro_Angle,timeAngle
     global avrgTheta,Encdr_angle,cntL_prev2,cntR_prev2
+    
+    Encdr_angle=-1*Encdr_angle
+    print("Encdr_angle= ",Encdr_angle)
 
     
    
     
-    if Angle < 0 :
+    if Angle < Encdr_angle :
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int) 
          
-        avrgTheta = (Encdr_angle + gyro_Angle) / 2
-        TCPLink.send(S,0,-20)
+        # avrgTheta = (Encdr_angle + gyro_Angle) / 2
+        TCPLink.send(S,0,20)
 
         cntR_prev2 = cntR_int
         cntL_prev2 = cntL_int
@@ -149,8 +153,8 @@ def goAngle(Angle):
         if cntL_prev2 > 4500:
             cntL_prev2-=9000
 
-    elif Angle > 0 :
-        TCPLink.send(S,0,20)
+    elif Angle > Encdr_angle :
+        TCPLink.send(S,0,-20)
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
         avrgTheta = (Encdr_angle + gyro_Angle) / 2
         cntR_prev2 = cntR_int
@@ -164,10 +168,10 @@ def goAngle(Angle):
         # break
         
     elif Angle == 0:
-        if gyro_Angle<0:
-            TCPLink.send(S,0,20)
-        else:
+        if Encdr_angle<0:
             TCPLink.send(S,0,-20)
+        else:
+            TCPLink.send(S,0,20)
             
             
     else:
@@ -226,7 +230,7 @@ def goPoint(srcX,srcY,destX,destY):
     #         TCPLink.send(S,0,-20)
     
     
-        if  abs(gyro_Angle-Angle)>=5:
+        if  abs(Encdr_angle-Angle)>=5:
             goAngle(Angle)
         
         elif ((timeDis)<=Distance) :
@@ -287,9 +291,9 @@ print(CommUWB.X, CommUWB.Y)
 
 src =  [round(CommUWB.X), round(CommUWB.Y)]
 # src =  [0, 0]
-dest = [-2, 1]
+dest = [-3, -2]
 
-Astar.SetBlocked(-1,-1)
+# Astar.SetBlocked(-1,-1)
 
 
 x_path,y_path=Astar.main(src, dest)
