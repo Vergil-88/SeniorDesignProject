@@ -5,30 +5,33 @@ import time
 gpio.setmode(gpio.BCM)
 gpio.setwarnings(False)
 
+distances = [0,0,0,0]
+
 # Define GPIO pins for HC-SR04
-trig1 = 21
-echo1 = 25
+trigF = 21
+echoF = 25
 
-trig2 = 20
-echo2 = 24
+trigR = 20
+echoR = 24
 
-trig3 = 16
-echo3 = 23
+trigL = 16
+echoL = 23
 
-trig4 = 12
-echo4 = 18
+trigRear = 12
+echoRear = 18
+
 # Set up GPIO pins
-gpio.setup(trig1, gpio.OUT)
-gpio.setup(echo1, gpio.IN)
+gpio.setup(trigF, gpio.OUT)
+gpio.setup(echoF, gpio.IN)
 
-gpio.setup(trig2, gpio.OUT)
-gpio.setup(echo2, gpio.IN)
+gpio.setup(trigR, gpio.OUT)
+gpio.setup(echoR, gpio.IN)
 
-gpio.setup(trig3, gpio.OUT)
-gpio.setup(echo3, gpio.IN)
+gpio.setup(trigL, gpio.OUT)
+gpio.setup(echoL, gpio.IN)
 
-gpio.setup(trig4, gpio.OUT)
-gpio.setup(echo4, gpio.IN)
+gpio.setup(trigRear, gpio.OUT)
+gpio.setup(echoRear, gpio.IN)
 
 def read_distance(trig, echo):
     # Send a short pulse to trigger the sensor
@@ -50,21 +53,32 @@ def read_distance(trig, echo):
     distance = round(distance, 2)  # Round to two decimal places
     return distance
 
-try:
-    while True:
-        dist1 = read_distance(trig1, echo1)
-        print("Distance 1:", dist1, "cm")
-        time.sleep(0.1)
-        dist2 = read_distance(trig2, echo2)
-        print("Distance 2:", dist2, "cm")
-        time.sleep(0.1)
-        dist3 = read_distance(trig3, echo3)
-        print("Distance 3: ", dist3, "cm")
-        time.sleep(0.1)
-        dist4 = read_distance(trig4, echo4)
-        print("Distance 4:", dist4, "cm")
-        time.sleep(0.5)  # Wait for 1 second before next reading
-except KeyboardInterrupt:
-    print("Measurement stopped by user")
-finally:
-    gpio.cleanup()  # Clean up GPIO pins
+
+def checkObstacle():
+    obstacle = [0,0,0,0]
+    
+    distF = read_distance(trigF, echoF)
+    time.sleep(0.01)
+    distR = read_distance(trigR, echoR)
+    time.sleep(0.01)
+    distL = read_distance(trigL, echoL)
+    time.sleep(0.01)
+    distRear = read_distance(trigRear, echoRear)
+    time.sleep(0.01)
+
+    distances = [distF, distR, distL, distRear]
+
+    for i in range(4):
+        
+        if distances[i] < 100:
+            obstacle[i] = 1
+        else
+            obstacle[i] = 0
+
+
+    return obstacle
+        
+
+
+
+
