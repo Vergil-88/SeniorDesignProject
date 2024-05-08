@@ -8,8 +8,8 @@ gpio.setwarnings(False)
 distances = [0,0,0,0]
 
 # Define GPIO pins for HC-SR04
-trigF = 21
-echoF = 25
+trigF = 12
+echoF = 18
 
 trigR = 20
 echoR = 24
@@ -17,8 +17,8 @@ echoR = 24
 trigL = 16
 echoL = 23
 
-trigRear = 12
-echoRear = 18
+trigRear = 21
+echoRear = 25
 
 # Set up GPIO pins
 gpio.setup(trigF, gpio.OUT)
