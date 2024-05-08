@@ -15,7 +15,7 @@ def process_line(line):
 
 def main():    
     # Initialize serial connection
-    ser = serial.Serial('COM11', 115200, timeout=1)
+    ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 
     while True:
         try:

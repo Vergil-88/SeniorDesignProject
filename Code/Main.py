@@ -156,7 +156,7 @@ def goAngle(Angle):
     elif Angle > Encdr_angle :
         TCPLink.send(S,0,-20)
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
-        avrgTheta = (Encdr_angle + gyro_Angle) / 2
+        # avrgTheta = (Encdr_angle + gyro_Angle) / 2
         cntR_prev2 = cntR_int
         cntL_prev2 = cntL_int
 
