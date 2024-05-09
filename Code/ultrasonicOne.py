@@ -5,33 +5,25 @@ import time
 gpio.setmode(gpio.BCM)
 gpio.setwarnings(False)
 
-distances = [0,0,0,0]
+
 
 # Define GPIO pins for HC-SR04
-trigF = 12
-echoF = 18
-
-trigR = 20
-echoR = 24
-
-trigL = 16
-echoL = 23
-
-trigRear = 21
-echoRear = 25
+trig = 23
+echo = 18
+obstacle = 0
 
 # Set up GPIO pins
-gpio.setup(trigF, gpio.OUT)
-gpio.setup(echoF, gpio.IN)
+gpio.setup(trig, gpio.OUT)
+gpio.setup(echo, gpio.IN)
 
-gpio.setup(trigR, gpio.OUT)
-gpio.setup(echoR, gpio.IN)
+# gpio.setup(trigR, gpio.OUT)
+# gpio.setup(echoR, gpio.IN)
 
-gpio.setup(trigL, gpio.OUT)
-gpio.setup(echoL, gpio.IN)
+# gpio.setup(trigL, gpio.OUT)
+# gpio.setup(echoL, gpio.IN)
 
-gpio.setup(trigRear, gpio.OUT)
-gpio.setup(echoRear, gpio.IN)
+# gpio.setup(trigRear, gpio.OUT)
+# gpio.setup(echoRear, gpio.IN)
 
 def read_distance(trig, echo):
     # Send a short pulse to trigger the sensor
@@ -42,7 +34,6 @@ def read_distance(trig, echo):
     # Measure the duration of the echo pulse
     while gpio.input(echo) == 0:
         pulse_start = time.time()
-        # print("asdfasdf")
         
     while gpio.input(echo) == 1:
         pulse_end = time.time()
@@ -55,30 +46,21 @@ def read_distance(trig, echo):
 
 
 def checkObstacle():
-    obstacle = [0,0,0,0]
+
     
-    distF = read_distance(trigF, echoF)
-    time.sleep(0.01)
-    distR = read_distance(trigR, echoR)
-    time.sleep(0.01)
-    distL = read_distance(trigL, echoL)
-    time.sleep(0.01)
-    distRear = read_distance(trigRear, echoRear)
+    dist = read_distance(trig, echo)
     time.sleep(0.01)
 
-    distances = [distF, distR, distL, distRear]
-
-    for i in range(4):
         
-        if distances[i] < 100:
-            obstacle[i] = 1
-        else
-            obstacle[i] = 0
+    if dist < 40:
+        obstacle = 1
+    else:
+        obstacle = 0
 
-
+    # print(dist)
+    # print(obstacle)
     return obstacle
-        
 
-
-
+# while 1:
+#     checkObstacle()        
 
