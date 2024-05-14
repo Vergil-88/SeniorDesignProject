@@ -72,7 +72,7 @@ def checkObstacle():
         
         if distances[i] < 100:
             obstacle[i] = 1
-        else
+        else:
             obstacle[i] = 0
 
 
