@@ -210,8 +210,8 @@ def main(src, dest):
     # Run the A* search algorithm
     
     x=a_star_search(grid, src, dest)
-    
-    i_path, j_path = zip(*x)
+    # print(x)
+    i_path, j_path = zip(*path)
     # print(i_path)
     # print(j_path)
     x_path=[None] * len(i_path)

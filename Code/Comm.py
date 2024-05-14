@@ -15,7 +15,7 @@ def process_line(line):
 
 def main():    
     # Initialize serial connection
-    ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+    ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
 
     while True:
         try:
@@ -28,5 +28,5 @@ def main():
             # print("Exiting program.")
             break
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
