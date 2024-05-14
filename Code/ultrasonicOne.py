@@ -44,9 +44,9 @@ def read_distance(trig, echo):
     distance = round(distance, 2)  # Round to two decimal places
     return distance
 
-
+obstacle=0
 def checkObstacle():
-
+    global obstacle
     
     dist = read_distance(trig, echo)
     time.sleep(0.01)

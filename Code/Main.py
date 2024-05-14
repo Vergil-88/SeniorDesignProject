@@ -19,10 +19,17 @@ my_GY_thread.start()
 
 start_time = time.time()
 
+
+
+
 sleep(5)
 
 i = 0
 S=TCPLink.TCP_init()
+
+# TCP_thred=threading.Thread(TCPLink.receive(S,False))
+# TCP_thred.start()
+
 while i<10 :
    
     TCPLink.send(S,0,0)
@@ -142,7 +149,7 @@ def goAngle(Angle):
     
    
     
-    if Angle < Encdr_angle:
+    if abs(Angle) < abs(gyro_Angle):
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int) 
          
         avrgTheta = (Encdr_angle + gyro_Angle) / 2
@@ -157,7 +164,7 @@ def goAngle(Angle):
         if cntL_prev2 > 4500:
             cntL_prev2-=9000
 
-    elif Angle > Encdr_angle:
+    elif abs(Angle) > abs(gyro_Angle):
         TCPLink.send(S,0,-20)
         Encdr_angle = encoder_Acalcs(cntR_int,cntL_int)  
         avrgTheta = (Encdr_angle + gyro_Angle) / 2
@@ -268,7 +275,7 @@ def goPoint(srcX,srcY,destX,destY):
             
             Astar.SetBlocked(x_path[j], y_path[j])
             
-            dest = [-3, -3]
+            dest = [-3, 1]
             
             new_src=[x_path[j-1],y_path[j-1]]
             # new_src=[round(CommUWB.X), round(CommUWB.Y)]
@@ -334,7 +341,7 @@ print(CommUWB.X, CommUWB.Y)
 
 src =  [round(CommUWB.X), round(CommUWB.Y)]
 # src =  [0, 0]
-dest = [-3, -3]
+dest = [-3, 1]
 
 # Astar.SetBlocked(-1,-1)
 
