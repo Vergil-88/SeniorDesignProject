@@ -71,21 +71,25 @@ def trace_path(cell_details, dest):
     # print()
 
 # Implement the A* search algorithm
+STOP=False
 def a_star_search(grid, src, dest):
-    global path
+    global path,STOP
     # Check if the source and destination are valid
     if not is_valid(src[0], src[1]) or not is_valid(dest[0], dest[1]):
         print("Source or destination is invalid")
+        STOP=True
         return
 
     # Check if the source and destination are unblocked
     if not is_unblocked(grid, src[0], src[1]) or not is_unblocked(grid, dest[0], dest[1]):
         print("Source or the destination is blocked")
+        STOP=True
         return
 
     # Check if we are already at the destination
     if is_destination(src[0], src[1], dest):
         print("We are already at the destination")
+        STOP=True
         return
 
     # Initialize the closed list (visited cells)
@@ -195,7 +199,7 @@ grid = [[1 for _ in range(10)] for _ in range(10)]
 
 
 def main(src, dest):
-    global grid 
+    global grid ,STOP
 	# Define the grid (1 for unblocked, 0 for blocked)
     
 
@@ -223,7 +227,7 @@ def main(src, dest):
     # print(x_path,y_path)
 
     
-    return x_path,y_path
+    return x_path,y_path,STOP
 
 # if __name__ == "__main__":
 # 	main([0 ,0],[-2,-2])

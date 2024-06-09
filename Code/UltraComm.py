@@ -33,11 +33,11 @@ def main():
                 received_data = ser.readline().decode('utf-8')
                 process_line(received_data)
                 # Print the current values of left, middle, and right
-                print("Current values - Left:", left, "Middle:", middle, "Right:", right)
+                # print("Current values - Left:", left, "Middle:", middle, "Right:", right)
         except KeyboardInterrupt:
             # Gracefully exit if there's a keyboard interrupt
             print("Exiting program.")
             break
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

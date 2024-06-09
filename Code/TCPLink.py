@@ -149,11 +149,16 @@ def receive(s, debug):
         
 #         send(S,0,0)
 
-       
 #     receive(S,True)  
-        
-    
-    
+# def main():     
+#     s = TCP_init()   
+#     while True:
+#         receive(s,False)
+
+
+# if __name__ == '__main__':
+
+#     main()
     
     
     
